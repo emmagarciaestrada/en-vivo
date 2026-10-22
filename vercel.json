@@ -1,0 +1,7 @@
+{
+  "functions": {
+    "api/tormentas.js": {
+      "maxDuration": 60
+    }
+  }
+}
