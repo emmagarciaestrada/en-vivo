@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Prueba de alertas del SMN</title>
+<style>
+  body{margin:0;font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:#111315;color:#eef0f2}
+  main{max-width:560px;margin:0 auto;padding:20px}
+  h1{font-size:22px;margin:0 0 6px}
+  p{color:#98a2ad}
+  .card{background:#1b1e21;border:1px solid #2b3035;border-radius:14px;padding:14px;margin:12px 0}
+  .ok{border-left:6px solid #2f9e5b}
+  .mal{border-left:6px solid #d93a3a}
+  .t{font-weight:700}
+  code,pre{font:13px/1.4 ui-monospace,Menlo,Consolas,monospace;word-break:break-all;white-space:pre-wrap}
+  pre{background:#111315;border-radius:8px;padding:8px;margin:8px 0 0;max-height:140px;overflow:auto}
+  button{width:100%;padding:14px;font-size:16px;border-radius:12px;border:0;background:#eef0f2;color:#111315;font-weight:700;margin-top:6px}
+</style>
+</head>
+<body>
+<main>
+  <h1>Prueba de alertas del SMN</h1>
+  <p id="estado">Consultando al SMN…</p>
+  <div id="lista"></div>
+  <button id="copiar" style="display:none">Copiar resultado para pegárselo a Claude</button>
+</main>
+<script>
+(async function(){
+  var estado=document.getElementById('estado'), lista=document.getElementById('lista'), btn=document.getElementById('copiar');
+  try{
+    var r=await fetch('/api/smn'); var d=await r.json();
+    var algunoOk=d.resultados.some(function(x){return x.ok});
+    estado.textContent=algunoOk?'Al menos una fuente respondió. Mirá cuál.':'Ninguna fuente respondió bien. Copiá el resultado y pasáselo a Claude.';
+    d.resultados.forEach(function(x){
+      var c=document.createElement('div'); c.className='card '+(x.ok?'ok':'mal');
+      var t=document.createElement('div'); t.className='t';
+      t.textContent=(x.ok?'✅ ':'❌ ')+x.nombre;
+      var s=document.createElement('div');
+      s.textContent=x.error?('Error: '+x.error):('Respuesta '+x.estado+' · '+(x.tipo||'sin tipo')+' · '+x.tamano+' caracteres · '+x.ms+' ms');
+      c.appendChild(t); c.appendChild(s);
+      if(x.muestra){var p=document.createElement('pre'); p.textContent=x.muestra; c.appendChild(p);}
+      lista.appendChild(c);
+    });
+    btn.style.display='block';
+    btn.onclick=function(){
+      var txt=JSON.stringify(d,null,1);
+      (navigator.clipboard?navigator.clipboard.writeText(txt):Promise.reject()).then(function(){btn.textContent='¡Copiado!'}).catch(function(){btn.textContent='No se pudo copiar'});
+    };
+  }catch(e){
+    estado.textContent='No se pudo correr la prueba: '+e;
+  }
+})();
+</script>
+</body>
+</html>
