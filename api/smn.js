@@ -2,10 +2,9 @@
 // Intenta leer cada dirección y cuenta qué respondió.
 
 const FUENTES = [
-  { nombre: "Alertas (servicio ws1, tipo AL)", url: "https://ws1.smn.gob.ar/v1/alerts/type/AL" },
-  { nombre: "Alertas a corto plazo (ws1, tipo AC)", url: "https://ws1.smn.gob.ar/v1/alerts/type/AC" },
-  { nombre: "Alertas (servicio ws, tipo AL)", url: "https://ws.smn.gob.ar/alerts/type/AL" },
-  { nombre: "Página oficial de alertas", url: "https://www.smn.gob.ar/alertas" },
+  { nombre: "Feed CAP oficial del SMN (registro OMM)", url: "https://ssl.smn.gob.ar/CAP/AR.php" },
+  { nombre: "Feed CAP de alertas a corto plazo", url: "http://www3.smn.gob.ar/feeds/CAP/avisocortoplazo/rss_acpCAP.xml" },
+  { nombre: "Feed CAP de alertas a corto plazo (https)", url: "https://www3.smn.gob.ar/feeds/CAP/avisocortoplazo/rss_acpCAP.xml" },
 ];
 
 async function probar(fuente) {
