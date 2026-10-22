@@ -24,6 +24,11 @@
   .aviso .donde{font-size:14px;margin:6px 0 0}
   .badge{display:inline-block;font-size:12px;font-weight:700;border-radius:999px;padding:2px 10px;background:var(--red);color:#fff;margin-right:6px}
   .note{font-size:13px;color:var(--muted)}
+  .estado.naranja{border-left-color:#e8801a}
+  .estado.gris{border-left-color:var(--muted)}
+  .tor{border-top:1px solid var(--line);padding:8px 0;font-size:14px}
+  .tor:first-child{margin-top:10px}
+  .tor b{display:block}
 </style>
 </head>
 <body>
@@ -39,6 +44,14 @@
     <span class="tag">Tu zona</span>
     <div class="big" id="big">Consultando al SMN…</div>
     <div id="det" class="note"></div>
+  </section>
+
+  <section class="card estado" id="rayos" aria-live="polite">
+    <span class="tag">Rayos cerca de Pilar · satélite</span>
+    <div class="big" id="rbig">Mirando el cielo…</div>
+    <div id="rdet" class="note"></div>
+    <div id="rlista"></div>
+    <div id="redad" class="note"></div>
   </section>
 
   <div id="lista"></div>
@@ -99,6 +112,62 @@
     $('big').textContent='No pude leer los avisos';
     $('det').textContent=String(e);
   });
+})();
+</script>
+<script>
+(function(){
+  var $=function(id){return document.getElementById(id)};
+  var NOM=['norte','noreste','este','sudeste','sur','sudoeste','oeste','noroeste'];
+  function dir(e,n){var g=(Math.atan2(e,n)*180/Math.PI+360)%360;return NOM[Math.round(g/45)%8]}
+  function texto(t){
+    switch(t.estado){
+      case 'sobre': return 'está encima de Pilar';
+      case 'se_acerca': return 'llegaría en ~'+t.llegaEnMin+' min';
+      case 'pasa_de_largo': return 'pasa de largo (a unos '+t.pasaAKm+' km)';
+      case 'se_aleja': return 'se aleja';
+      case 'lejos_aun': return 'se acerca, pero todavía falta más de 3 horas';
+      case 'casi_estacionaria': return 'casi no se mueve';
+      default: return 'todavía no se sabe hacia dónde va';
+    }
+  }
+  function cargar(){
+    fetch('/api/tormentas').then(function(r){return r.json()}).then(function(d){
+      if(d.error)throw new Error(d.error);
+      var r=d.resumen||{}, c=$('rayos'), L=$('rlista');
+      L.innerHTML='';
+      if(r.estado==='sobre'){
+        c.className='card estado alerta';
+        $('rbig').textContent='⚡ Hay una tormenta sobre Pilar';
+        $('rdet').textContent='Quedate bajo techo y alejate de ventanas.';
+      }else if(r.estado==='se_acerca'){
+        c.className='card estado '+(r.llegaEnMin<=60?'alerta':'naranja');
+        $('rbig').textContent='Una tormenta llegaría a Pilar en ~'+r.llegaEnMin+' min';
+        $('rdet').textContent='Hoy está a '+r.distanciaKm+' km y se mueve hacia el '+r.haciaDonde+' a unos '+r.rapidezKmh+' km/h. Es una estimación: si cambia de rumbo, cambia el aviso.';
+      }else if(r.estado==='hay_tormentas_pero_no_llegan'){
+        c.className='card estado gris';
+        $('rbig').textContent='Hay tormentas en la zona, pero ninguna se dirige a Pilar';
+        $('rdet').textContent='La más cercana está a '+r.masCercanaKm+' km.';
+      }else{
+        c.className='card estado';
+        $('rbig').textContent='Sin tormentas con rayos cerca de Pilar';
+        $('rdet').textContent='En los últimos 20 minutos no hubo grupos de rayos en 350 km a la redonda.';
+      }
+      (d.tormentas||[]).slice(0,4).forEach(function(t){
+        var x=document.createElement('div');x.className='tor';
+        var b=document.createElement('b');
+        b.textContent='A '+t.distanciaKm+' km al '+dir(t.posicionKm.este,t.posicionKm.norte)+' · '+t.rayos+' rayos';
+        var s=document.createElement('span');
+        s.textContent=(t.haciaDonde?'Se mueve al '+t.haciaDonde+' a ~'+t.rapidezKmh+' km/h · ':'')+texto(t);
+        x.appendChild(b);x.appendChild(s);L.appendChild(x);
+      });
+      $('redad').textContent='Datos del satélite de hace '+d.ultimoArchivoHace_s+' segundos. Se actualiza solo cada 2 minutos.';
+    }).catch(function(e){
+      $('rbig').textContent='No pude leer los rayos ahora';
+      $('rdet').textContent=String(e);
+    });
+  }
+  cargar();
+  setInterval(cargar,120000);
 })();
 </script>
 </body>
